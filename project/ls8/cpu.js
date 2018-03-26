@@ -56,7 +56,7 @@ class CPU {
   alu(op, regA, regB) {
     switch (op) {
       case 'MUL':
-        // !!! IMPLEMENT ME
+        this.reg[regA] *= this.reg[regB];
         break;
     }
   }
@@ -69,15 +69,18 @@ class CPU {
     // from the memory address pointed to by the PC. (I.e. the PC holds the
     // index into memory of the next instruction.)
 
-    let IR = this.ram.read(this.reg.PC).toString(2);
-    if (IR.length !== 8) {
-      const arr = IR.split('');
+    // let IR = this.ram.read(this.reg.PC).toString(2);
+    const IR = this.ram.read(this.reg.PC);
+
+    let byte = IR.toString(2);
+    if (byte.length !== 8) {
+      const arr = byte.split('');
 
       while (arr.length !== 8) {
         arr.unshift('0');
       }
 
-      IR = arr.join('');
+      byte = arr.join('');
     }
 
     // Debugging output
@@ -93,28 +96,53 @@ class CPU {
     // Execute the instruction. Perform the actions for the instruction as
     // outlined in the LS-8 spec.
 
-    if (IR === '10011001') {
+    const bt = [];
+
+    const LDI = 0b10011001;
+    const PRN = 0b01000011;
+    const HLT = 0b00000001;
+    const MUL = 0b10101010;
+
+    bt[LDI] = _ => {
       this.reg[operandA] = operandB;
-    }
+    };
 
-    if (IR === '01000011') {
+    bt[PRN] = _ => {
       console.log(this.reg[operandA]);
-    }
+    };
 
-    if (IR === '10101010') {
-      this.reg[operandA] *= this.reg[operandB];
-    }
-
-    if (IR === '00000001') {
+    bt[HLT] = _ => {
       this.stopClock();
-    }
+    };
+
+    bt[MUL] = _ => {
+      this.alu('MUL', operandA, operandB);
+    };
+
+    bt[IR]();
+
+    // if (IR === '10011001') {
+    //   this.reg[operandA] = operandB;
+    // }
+
+    // if (IR === '01000011') {
+    //   console.log(this.reg[operandA]);
+    // }
+
+    // if (IR === '10101010') {
+    //   this.reg[operandA] *= this.reg[operandB];
+    // }
+
+    // if (IR === '00000001') {
+    //   this.stopClock();
+    // }
 
     // Increment the PC register to go to the next instruction. Instructions
     // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
     // instruction byte tells you how many bytes follow the instruction byte
     // for any particular instruction.
 
-    for (let i = 0; i <= parseInt(IR[0] + IR[1], 2); i++) {
+    for (let i = 0; i <= parseInt(byte[0] + byte[1], 2); i++) {
       this.reg.PC++;
     }
   }
