@@ -99,8 +99,10 @@ class CPU {
 
     const LDI = 0b10011001;
     const PRN = 0b01000011;
-    const HLT = 0b00000001;
+
     const MUL = 0b10101010;
+
+    const HLT = 0b00000001;
 
     bt[LDI] = _ => {
       this.reg[operandA] = operandB;
@@ -110,12 +112,12 @@ class CPU {
       console.log(this.reg[operandA]);
     };
 
-    bt[HLT] = _ => {
-      this.stopClock();
-    };
-
     bt[MUL] = _ => {
       this.alu('MUL', operandA, operandB);
+    };
+
+    bt[HLT] = _ => {
+      this.stopClock();
     };
 
     bt[IR]();
