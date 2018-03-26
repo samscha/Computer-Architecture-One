@@ -101,6 +101,10 @@ class CPU {
       console.log(this.reg[operandA]);
     }
 
+    if (IR === '10101010') {
+      this.reg[operandA] *= this.reg[operandB];
+    }
+
     if (IR === '00000001') {
       this.stopClock();
     }
