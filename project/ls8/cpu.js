@@ -6,92 +6,114 @@
  * Class for simulating a simple Computer (CPU & memory)
  */
 class CPU {
+  /**
+   * Initialize the CPU
+   */
+  constructor(ram) {
+    this.ram = ram;
 
-    /**
-     * Initialize the CPU
-     */
-    constructor(ram) {
-        this.ram = ram;
+    this.reg = new Array(8).fill(0); // General-purpose registers R0-R7
 
-        this.reg = new Array(8).fill(0); // General-purpose registers R0-R7
-        
-        // Special-purpose registers
-        this.reg.PC = 0; // Program Counter
-    }
-	
-    /**
-     * Store value in memory address, useful for program loading
-     */
-    poke(address, value) {
-        this.ram.write(address, value);
-    }
+    // Special-purpose registers
+    this.reg.PC = 0; // Program Counter
+  }
 
-    /**
-     * Starts the clock ticking on the CPU
-     */
-    startClock() {
-        const _this = this;
+  /**
+   * Store value in memory address, useful for program loading
+   */
+  poke(address, value) {
+    this.ram.write(address, value);
+  }
 
-        this.clock = setInterval(() => {
-            _this.tick();
-        }, 1); // 1 ms delay == 1 KHz clock == 0.000001 GHz
-    }
+  /**
+   * Starts the clock ticking on the CPU
+   */
+  startClock() {
+    const _this = this;
 
-    /**
-     * Stops the clock
-     */
-    stopClock() {
-        clearInterval(this.clock);
-    }
+    this.clock = setInterval(() => {
+      _this.tick();
+    }, 1); // 1 ms delay == 1 KHz clock == 0.000001 GHz
+  }
 
-    /**
-     * ALU functionality
-     *
-     * The ALU is responsible for math and comparisons.
-     *
-     * If you have an instruction that does math, i.e. MUL, the CPU would hand
-     * it off to it's internal ALU component to do the actual work.
-     *
-     * op can be: ADD SUB MUL DIV INC DEC CMP
-     */
-    alu(op, regA, regB) {
-        switch (op) {
-            case 'MUL':
-                // !!! IMPLEMENT ME
-                break;
-        }
-    }
+  /**
+   * Stops the clock
+   */
+  stopClock() {
+    clearInterval(this.clock);
+  }
 
-    /**
-     * Advances the CPU one cycle
-     */
-    tick() {
-        // Load the instruction register (IR--can just be a local variable here)
-        // from the memory address pointed to by the PC. (I.e. the PC holds the
-        // index into memory of the next instruction.)
-
+  /**
+   * ALU functionality
+   *
+   * The ALU is responsible for math and comparisons.
+   *
+   * If you have an instruction that does math, i.e. MUL, the CPU would hand
+   * it off to it's internal ALU component to do the actual work.
+   *
+   * op can be: ADD SUB MUL DIV INC DEC CMP
+   */
+  alu(op, regA, regB) {
+    switch (op) {
+      case 'MUL':
         // !!! IMPLEMENT ME
-
-        // Debugging output
-        //console.log(`${this.reg.PC}: ${IR.toString(2)}`);
-
-        // Get the two bytes in memory _after_ the PC in case the instruction
-        // needs them.
-
-        // !!! IMPLEMENT ME
-
-        // Execute the instruction. Perform the actions for the instruction as
-        // outlined in the LS-8 spec.
-
-        // !!! IMPLEMENT ME
-
-        // Increment the PC register to go to the next instruction. Instructions
-        // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
-        // instruction byte tells you how many bytes follow the instruction byte
-        // for any particular instruction.
-        
-        // !!! IMPLEMENT ME
+        break;
     }
+  }
+
+  /**
+   * Advances the CPU one cycle
+   */
+  tick() {
+    // Load the instruction register (IR--can just be a local variable here)
+    // from the memory address pointed to by the PC. (I.e. the PC holds the
+    // index into memory of the next instruction.)
+
+    let IR = this.ram.read(this.reg.PC).toString(2);
+    if (IR.length !== 8) {
+      const arr = IR.split('');
+
+      while (arr.length !== 8) {
+        arr.unshift('0');
+      }
+
+      IR = arr.join('');
+    }
+
+    // Debugging output
+    // console.log(`${this.reg.PC}: ${IR.toString(2)}`);
+
+    // Get the two bytes in memory _after_ the PC in case the instruction
+    // needs them.
+
+    /* !!!!!!!!!!!!!!!!!!!!!!! check to see if these values are out of index */
+    const operandA = this.ram.read(this.reg.PC + 1);
+    const operandB = this.ram.read(this.reg.PC + 2);
+
+    // Execute the instruction. Perform the actions for the instruction as
+    // outlined in the LS-8 spec.
+
+    if (IR === '10011001') {
+      this.reg[operandA] = operandB;
+    }
+
+    if (IR === '01000011') {
+      console.log(this.reg[operandA]);
+    }
+
+    if (IR === '00000001') {
+      this.stopClock();
+    }
+
+    // Increment the PC register to go to the next instruction. Instructions
+    // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
+    // instruction byte tells you how many bytes follow the instruction byte
+    // for any particular instruction.
+
+    for (let i = 0; i <= parseInt(IR[0] + IR[1], 2); i++) {
+      this.reg.PC++;
+    }
+  }
 }
 
 module.exports = CPU;
