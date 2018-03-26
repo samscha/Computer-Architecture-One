@@ -69,7 +69,6 @@ class CPU {
     // from the memory address pointed to by the PC. (I.e. the PC holds the
     // index into memory of the next instruction.)
 
-    // let IR = this.ram.read(this.reg.PC).toString(2);
     const IR = this.ram.read(this.reg.PC);
 
     let byte = IR.toString(2);
@@ -120,22 +119,6 @@ class CPU {
     };
 
     bt[IR]();
-
-    // if (IR === '10011001') {
-    //   this.reg[operandA] = operandB;
-    // }
-
-    // if (IR === '01000011') {
-    //   console.log(this.reg[operandA]);
-    // }
-
-    // if (IR === '10101010') {
-    //   this.reg[operandA] *= this.reg[operandB];
-    // }
-
-    // if (IR === '00000001') {
-    //   this.stopClock();
-    // }
 
     // Increment the PC register to go to the next instruction. Instructions
     // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
