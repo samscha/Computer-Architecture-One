@@ -32,29 +32,64 @@ class CPU {
     const PUSH = 0b01001101;
     const POP = 0b01001100;
 
-    this.bt[LDI] = (operandA, operandB) => {
-      this.reg[operandA] = operandB;
+    const CALL = 0b01001000;
+    const RET = 0b00001001;
+
+    const ADD = 0b10101000;
+
+    this.bt[LDI] = (opA, opB) => {
+      this.reg[opA] = opB;
     };
 
-    this.bt[PRN] = (operandA, operandB) => {
-      console.log(this.reg[operandA]);
+    this.bt[PRN] = (opA, opB) => {
+      console.log(this.reg[opA]);
     };
 
-    this.bt[MUL] = (operandA, operandB) => {
-      this.alu('MUL', operandA, operandB);
+    this.bt[MUL] = (opA, opB) => {
+      this.alu('MUL', opA, opB);
     };
 
-    this.bt[HLT] = (operandA, operandB) => {
+    this.bt[HLT] = (opA, opB) => {
       this.stopClock();
     };
 
-    this.bt[PUSH] = (operandA, operandB) => {
-      this.ram.write(--this.reg[7], operandA);
+    this.bt[PUSH] = opA => {
+      // console.log('push');
+      // console.log('this.reg[7] before', this.reg[7]);
+      this.ram.write(--this.reg[7], opA);
+      // console.log('this.reg[7] after', this.reg[7]);
+      // console.log('');
+      // console.log(this.ram.read(this.reg[7]));
+      // console.log(opA, 'should be equal');
     };
 
-    this.bt[POP] = (operandA, operandB) => {
-      this.reg[operandA] = this.ram.read(this.reg[7]);
-      this.reg[7]++;
+    this.bt[POP] = _ => {
+      return this.ram.read(this.reg[7]++);
+    };
+
+    this.bt[CALL] = (opA, opB) => {
+      // console.log('call\n');
+      // console.log('opA', opA);
+
+      this.bt[PUSH](this.reg.PC + 2);
+
+      // console.log('latter call');
+      // console.log('opA', opA);
+
+      this.reg.PC = this.reg[opA];
+
+      return true;
+    };
+
+    this.bt[RET] = (opA, opB) => {
+      // console.log('RET called');
+      this.reg.PC = this.bt[POP]();
+
+      return true;
+    };
+
+    this.bt[ADD] = (opA, opB) => {
+      this.reg[opA] = this.reg[opA] + this.reg[opB];
     };
   }
 
@@ -123,14 +158,17 @@ class CPU {
     // Execute the instruction. Perform the actions for the instruction as
     // outlined in the LS-8 spec.
 
-    this.bt[IR](operandA, operandB);
+    const IRCall = this.bt[IR](operandA, operandB);
 
     // Increment the PC register to go to the next instruction. Instructions
     // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
     // instruction byte tells you how many bytes follow the instruction byte
     // for any particular instruction.
 
+    if (IRCall) return; // CALL instruction fetched
+
     this.reg.PC += 1 + (IR >>> 6);
+    // console.log('reg at the end', this.reg);
   }
 }
 
