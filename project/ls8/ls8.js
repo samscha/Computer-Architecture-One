@@ -16,7 +16,7 @@ function loadMemory(program) {
 const onHalt = _ => {
   console.log('');
 
-  if (++clock > programs.length - 1) return;
+  if (clock > programs.length - 1) return;
 
   console.log(`PROGRAM ${programNames[clock]}:`);
 
@@ -26,6 +26,7 @@ const onHalt = _ => {
   cpu.onHalt = onHalt;
 
   loadMemory(programs[clock]);
+  clock++;
 
   cpu.startClock();
 };
@@ -41,10 +42,12 @@ let ram = new RAM(256);
 let cpu = new CPU(ram);
 let clock = 0;
 
-cpu.onHalt = onHalt;
+onHalt();
 
-loadMemory(programs[clock]);
+// cpu.onHalt = onHalt;
 
-console.log(`\nPROGRAM ${programNames[clock]}:`);
+// loadMemory(programs[clock]);
 
-cpu.startClock();
+// console.log(`\nPROGRAM ${programNames[clock]}:`);
+
+// cpu.startClock();
