@@ -1,5 +1,4 @@
-const fs = require('fs');
-const sterilize = require('./worker/sterilize');
+const readPrograms = require('./worker/readPrograms');
 
 const RAM = require('./ram');
 const CPU = require('./cpu');
@@ -21,9 +20,7 @@ function loadMemory(program) {
 let ram = new RAM(256);
 let cpu = new CPU(ram);
 
-const programs = process.argv
-  .slice(2, process.argv.length)
-  .map(program => sterilize(fs.readFileSync(program, 'utf8').split('\n')));
+const programs = readPrograms(process.argv);
 
 // programs.forEach(program => loadMemory(program));
 
