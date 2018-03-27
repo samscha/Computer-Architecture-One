@@ -16,6 +16,9 @@ class CPU {
 
     // Special-purpose registers
     this.reg.PC = 0; // Program Counter
+
+    this.reg[7] = 256 - 12;
+    /* register R7 (reserved) = F4 address in ram */
   }
 
   /**
@@ -70,6 +73,7 @@ class CPU {
     // index into memory of the next instruction.)
 
     const IR = this.ram.read(this.reg.PC);
+    console.log('ir', IR);
 
     let byte = IR.toString(2);
     if (byte.length !== 8) {
@@ -103,6 +107,9 @@ class CPU {
 
     const HLT = 0b00000001;
 
+    const PUSH = 0b01001101;
+    const POP = 0b01001100;
+
     bt[LDI] = _ => {
       this.reg[operandA] = operandB;
     };
@@ -117,6 +124,15 @@ class CPU {
 
     bt[HLT] = _ => {
       this.stopClock();
+    };
+
+    bt[PUSH] = _ => {
+      this.ram.write(--this.reg[7], operandA);
+    };
+
+    bt[POP] = _ => {
+      this.reg[operandA] = this.ram.read(this.reg[7]);
+      this.reg[7]++;
     };
 
     bt[IR]();
