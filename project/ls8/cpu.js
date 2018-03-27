@@ -54,13 +54,7 @@ class CPU {
     };
 
     this.bt[PUSH] = opA => {
-      // console.log('push');
-      // console.log('this.reg[7] before', this.reg[7]);
       this.ram.write(--this.reg[7], opA);
-      // console.log('this.reg[7] after', this.reg[7]);
-      // console.log('');
-      // console.log(this.ram.read(this.reg[7]));
-      // console.log(opA, 'should be equal');
     };
 
     this.bt[POP] = _ => {
@@ -68,13 +62,7 @@ class CPU {
     };
 
     this.bt[CALL] = (opA, opB) => {
-      // console.log('call\n');
-      // console.log('opA', opA);
-
-      this.bt[PUSH](this.reg.PC + 2);
-
-      // console.log('latter call');
-      // console.log('opA', opA);
+      this.bt[PUSH](this.reg.PC + 1 + (CALL >>> 6));
 
       this.reg.PC = this.reg[opA];
 
@@ -82,7 +70,6 @@ class CPU {
     };
 
     this.bt[RET] = (opA, opB) => {
-      // console.log('RET called');
       this.reg.PC = this.bt[POP]();
 
       return true;
@@ -165,10 +152,9 @@ class CPU {
     // instruction byte tells you how many bytes follow the instruction byte
     // for any particular instruction.
 
-    if (IRCall) return; // CALL instruction fetched
+    if (IRCall) return;
 
     this.reg.PC += 1 + (IR >>> 6);
-    // console.log('reg at the end', this.reg);
   }
 }
 
