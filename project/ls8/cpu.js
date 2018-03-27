@@ -101,6 +101,8 @@ class CPU {
    */
   stopClock() {
     clearInterval(this.clock);
+
+    this.onHalt();
   }
 
   /**

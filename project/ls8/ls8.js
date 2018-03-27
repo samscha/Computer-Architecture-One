@@ -13,18 +13,37 @@ function loadMemory(program) {
   }
 }
 
+const onHalt = _ => {
+  console.log('');
+
+  if (++clock > programs.length - 1) return;
+
+  console.log(`CLOCK ${clock}:`);
+
+  ram = new RAM(256);
+  cpu = new CPU(ram);
+
+  cpu.onHalt = onHalt;
+
+  loadMemory(programs[clock]);
+
+  cpu.startClock();
+};
+
 /**
  * Main
  */
 
-let ram = new RAM(256);
-let cpu = new CPU(ram);
-
 const programs = readPrograms(process.argv);
 
-// programs.forEach(program => loadMemory(program));
+let ram = new RAM(256);
+let cpu = new CPU(ram);
+let clock = 0;
 
-/* for now just load first program */
-loadMemory(programs[0]);
+cpu.onHalt = onHalt;
+
+loadMemory(programs[clock]);
+
+console.log(`\CLOCK ${clock}:`);
 
 cpu.startClock();
