@@ -43,11 +43,3 @@ let cpu = new CPU(ram);
 let clock = 0;
 
 onHalt();
-
-// cpu.onHalt = onHalt;
-
-// loadMemory(programs[clock]);
-
-// console.log(`\nPROGRAM ${programNames[clock]}:`);
-
-// cpu.startClock();
