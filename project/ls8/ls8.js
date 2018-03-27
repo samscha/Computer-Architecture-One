@@ -18,7 +18,7 @@ const onHalt = _ => {
 
   if (++clock > programs.length - 1) return;
 
-  console.log(`CLOCK ${clock}:`);
+  console.log(`PROGRAM ${programNames[clock]}:`);
 
   ram = new RAM(256);
   cpu = new CPU(ram);
@@ -35,6 +35,7 @@ const onHalt = _ => {
  */
 
 const programs = readPrograms(process.argv);
+const programNames = process.argv.slice(2);
 
 let ram = new RAM(256);
 let cpu = new CPU(ram);
@@ -44,6 +45,6 @@ cpu.onHalt = onHalt;
 
 loadMemory(programs[clock]);
 
-console.log(`\CLOCK ${clock}:`);
+console.log(`\nPROGRAM ${programNames[clock]}:`);
 
 cpu.startClock();
