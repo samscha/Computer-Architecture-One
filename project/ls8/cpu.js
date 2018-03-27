@@ -88,7 +88,6 @@ class CPU {
     // Get the two bytes in memory _after_ the PC in case the instruction
     // needs them.
 
-    /* !!!!!!!!!!!!!!!!!!!!!!! check to see if these values are out of index */
     const operandA = this.ram.read(this.reg.PC + 1);
     const operandB = this.ram.read(this.reg.PC + 2);
 
