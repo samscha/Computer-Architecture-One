@@ -19,6 +19,43 @@ class CPU {
 
     this.reg[7] = 256 - 12;
     /* register R7 (reserved) = F4 address in ram */
+
+    this.bt = [];
+
+    const LDI = 0b10011001;
+    const PRN = 0b01000011;
+
+    const MUL = 0b10101010;
+
+    const HLT = 0b00000001;
+
+    const PUSH = 0b01001101;
+    const POP = 0b01001100;
+
+    this.bt[LDI] = (operandA, operandB) => {
+      this.reg[operandA] = operandB;
+    };
+
+    this.bt[PRN] = (operandA, operandB) => {
+      console.log(this.reg[operandA]);
+    };
+
+    this.bt[MUL] = (operandA, operandB) => {
+      this.alu('MUL', operandA, operandB);
+    };
+
+    this.bt[HLT] = (operandA, operandB) => {
+      this.stopClock();
+    };
+
+    this.bt[PUSH] = (operandA, operandB) => {
+      this.ram.write(--this.reg[7], operandA);
+    };
+
+    this.bt[POP] = (operandA, operandB) => {
+      this.reg[operandA] = this.ram.read(this.reg[7]);
+      this.reg[7]++;
+    };
   }
 
   /**
@@ -73,18 +110,6 @@ class CPU {
     // index into memory of the next instruction.)
 
     const IR = this.ram.read(this.reg.PC);
-    console.log('ir', IR);
-
-    let byte = IR.toString(2);
-    if (byte.length !== 8) {
-      const arr = byte.split('');
-
-      while (arr.length !== 8) {
-        arr.unshift('0');
-      }
-
-      byte = arr.join('');
-    }
 
     // Debugging output
     // console.log(`${this.reg.PC}: ${IR.toString(2)}`);
@@ -98,53 +123,14 @@ class CPU {
     // Execute the instruction. Perform the actions for the instruction as
     // outlined in the LS-8 spec.
 
-    const bt = [];
-
-    const LDI = 0b10011001;
-    const PRN = 0b01000011;
-
-    const MUL = 0b10101010;
-
-    const HLT = 0b00000001;
-
-    const PUSH = 0b01001101;
-    const POP = 0b01001100;
-
-    bt[LDI] = _ => {
-      this.reg[operandA] = operandB;
-    };
-
-    bt[PRN] = _ => {
-      console.log(this.reg[operandA]);
-    };
-
-    bt[MUL] = _ => {
-      this.alu('MUL', operandA, operandB);
-    };
-
-    bt[HLT] = _ => {
-      this.stopClock();
-    };
-
-    bt[PUSH] = _ => {
-      this.ram.write(--this.reg[7], operandA);
-    };
-
-    bt[POP] = _ => {
-      this.reg[operandA] = this.ram.read(this.reg[7]);
-      this.reg[7]++;
-    };
-
-    bt[IR]();
+    this.bt[IR](operandA, operandB);
 
     // Increment the PC register to go to the next instruction. Instructions
     // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
     // instruction byte tells you how many bytes follow the instruction byte
     // for any particular instruction.
 
-    for (let i = 0; i <= parseInt(byte[0] + byte[1], 2); i++) {
-      this.reg.PC++;
-    }
+    this.reg.PC += 1 + (IR >>> 6);
   }
 }
 
