@@ -62,7 +62,7 @@ class CPU {
     };
 
     this.bt[CALL] = (opA, opB) => {
-      this.bt[PUSH](this.reg.PC + 1 + (CALL >>> 6));
+      this.bt[PUSH](this.reg.PC + (CALL >>> 6));
 
       this.reg.PC = this.reg[opA];
 
@@ -71,8 +71,6 @@ class CPU {
 
     this.bt[RET] = (opA, opB) => {
       this.reg.PC = this.bt[POP]();
-
-      return true;
     };
 
     this.bt[ADD] = (opA, opB) => {
