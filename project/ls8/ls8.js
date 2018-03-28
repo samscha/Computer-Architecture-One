@@ -16,7 +16,10 @@ function loadMemory(cpu, program) {
 
 const onHalt = _ => {
   console.log('');
-  if (cycle > process.argv.length - 2 - 1) return;
+  if (cycle > process.argv.length - 2 - 1) {
+    console.log('<< shutting down >>');
+    process.exit(0);
+  }
 
   console.log(`<< ${process.argv.slice(2)[cycle]} >>`);
 
@@ -46,5 +49,7 @@ if (process.argv.length < 3) {
   console.error('Please provide programs: node ls8.js <<FILE/PATH HERE>>');
   process.exit(1);
 }
+
+console.log('<< booting up >>');
 
 onHalt();
