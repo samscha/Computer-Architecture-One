@@ -1,7 +1,7 @@
 const fs = require('fs');
-const sterilize = require('./sterilize');
+const sanitize = require('./sanitize');
 
 module.exports = arr =>
   arr
     .slice(2, process.argv.length)
-    .map(program => sterilize(fs.readFileSync(program, 'utf8').split('\n')));
+    .map(program => sanitize(fs.readFileSync(program, 'utf8').split('\n')));
