@@ -58,11 +58,14 @@ class CPU {
     };
 
     this.bt[POP] = (opA, opB) => {
+      // check if this.reg[7] === 256 - 12
+      // else
       this.reg[opA] = this.ram.read(this.reg[7]++);
     };
 
     this.bt[CALL] = (opA, opB) => {
-      this.bt[PUSH](this.reg.PC + (CALL >>> 6));
+      this.reg.PC += CALL >>> 6;
+      this.bt[PUSH]('PC');
 
       this.reg.PC = this.reg[opA];
 
@@ -70,7 +73,7 @@ class CPU {
     };
 
     this.bt[RET] = (opA, opB) => {
-      this.reg.PC = this.bt[POP]();
+      this.bt[POP]('PC');
     };
 
     this.bt[ADD] = (opA, opB) => {
@@ -134,7 +137,7 @@ class CPU {
     const IR = this.ram.read(this.reg.PC);
 
     // Debugging output
-    console.log(`${this.reg.PC}: ${IR.toString(2)}`);
+    // console.log(`${this.reg.PC}: ${IR.toString(2)}`);
 
     // Get the two bytes in memory _after_ the PC in case the instruction
     // needs them.
