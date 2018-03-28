@@ -16,19 +16,18 @@ function loadMemory(program) {
 const onHalt = _ => {
   console.log('');
 
-  if (clock > programs.length - 1) return;
+  if (cycle > programs.length - 1) return;
 
-  console.log(`PROGRAM ${programNames[clock]}:`);
+  console.log(`<< ${programNames[cycle]} >>`);
 
-  ram = new RAM(256);
-  cpu = new CPU(ram);
+  ram = new RAM(256); /* new cpu */
+  cpu = new CPU(ram); /* new ram */
 
-  cpu.onHalt = onHalt;
+  cpu.onHalt = onHalt; /* register with cpu */
 
-  loadMemory(programs[clock]);
-  clock++;
+  loadMemory(programs[cycle++]); /* load new program into cpu */
 
-  cpu.startClock();
+  cpu.startClock(); /* start cpu */
 };
 
 /**
@@ -40,6 +39,6 @@ const programNames = process.argv.slice(2);
 
 let ram = new RAM(256);
 let cpu = new CPU(ram);
-let clock = 0;
+let cycle = 0;
 
 onHalt();
