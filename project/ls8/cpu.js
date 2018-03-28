@@ -17,7 +17,7 @@ class CPU {
     // Special-purpose registers
     this.reg.PC = 0; // Program Counter
 
-    this.reg[7] = 256 - 12;
+    this.reg[7] = 255 - 12;
     /* register R7 (reserved) = F4 address in ram */
 
     this.bt = [];
@@ -58,8 +58,6 @@ class CPU {
     };
 
     this.bt[POP] = (opA, opB) => {
-      // check if this.reg[7] === 256 - 12
-      // else
       this.reg[opA] = this.ram.read(this.reg[7]++);
     };
 
