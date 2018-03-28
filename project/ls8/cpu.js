@@ -53,12 +53,12 @@ class CPU {
       this.stopClock();
     };
 
-    this.bt[PUSH] = opA => {
-      this.ram.write(--this.reg[7], opA);
+    this.bt[PUSH] = (opA, opB) => {
+      this.ram.write(--this.reg[7], this.reg[opA]);
     };
 
-    this.bt[POP] = _ => {
-      return this.ram.read(this.reg[7]++);
+    this.bt[POP] = (opA, opB) => {
+      this.reg[opA] = this.ram.read(this.reg[7]++);
     };
 
     this.bt[CALL] = (opA, opB) => {
@@ -134,7 +134,7 @@ class CPU {
     const IR = this.ram.read(this.reg.PC);
 
     // Debugging output
-    // console.log(`${this.reg.PC}: ${IR.toString(2)}`);
+    console.log(`${this.reg.PC}: ${IR.toString(2)}`);
 
     // Get the two bytes in memory _after_ the PC in case the instruction
     // needs them.
