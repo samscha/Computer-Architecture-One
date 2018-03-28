@@ -40,6 +40,8 @@ class CPU {
 
     const ADD = 0b10101000;
 
+    const ST = 0b10011010;
+
     this.bt[LDI] = (opA, opB) => {
       this.reg[opA] = opB;
     };
@@ -80,6 +82,10 @@ class CPU {
     this.bt[ADD] = (opA, opB) => {
       this.alu('ADD', opA, opB);
     };
+
+    this.bt[ST] = (opA, opB) => {
+      this.reg[opA] = this.reg[opB];
+    };
   }
 
   /**
@@ -98,6 +104,10 @@ class CPU {
     this.clock = setInterval(() => {
       _this.tick();
     }, 1); // 1 ms delay == 1 KHz clock == 0.000001 GHz
+
+    this.keyboard = setInterval(_ => {
+      //
+    });
   }
 
   /**
@@ -105,6 +115,7 @@ class CPU {
    */
   stopClock() {
     clearInterval(this.clock);
+    clearInterval(this.keyboard);
 
     this.onHalt();
   }
@@ -153,7 +164,13 @@ class CPU {
     // outlined in the LS-8 spec.
 
     if (!this.bt[IR]) {
-      console.error(`ERROR: instruction ${IR.toString(2)} not found`);
+      console.error(
+        `ERROR: instruction ${IR.toString(2)
+          .split('')
+          .concat(new Array(8 - IR.toString(2).length).fill('0'))
+          .reverse()
+          .join('')} not found`,
+      );
       this.bt[0b00000001](); /* HALT */
       return;
     }
