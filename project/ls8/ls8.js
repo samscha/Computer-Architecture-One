@@ -42,4 +42,9 @@ const onHalt = _ => {
 
 let cycle = 0;
 
+if (process.argv.length < 3) {
+  console.error('Please provide programs: node ls8.js <<FILE/PATH HERE>>');
+  process.exit(1);
+}
+
 onHalt();
