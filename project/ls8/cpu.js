@@ -17,55 +17,48 @@ class CPU {
     // Special-purpose registers
     this.reg.PC = 0; // Program Counter
 
-    /* register R7 (reserved) = F4 address in ram */
-    this.reg[7] = 0xf4;
+    /* set alias for IM register (reserved register R5) */
+    this.reg.IM = this.reg[5];
 
-    /* add alias SP */
+    /* add alias for IS register (reserved register R6) */
+    this.reg.IS = this.reg[6];
+
+    /* add alias for SP (reserved register R7) */
     this.reg.SP = this.reg[7];
+    /* set register R7 (reserved) = F4 address in ram */
+    this.reg.SP = 0xf4;
 
     this.bt = [];
 
-    const LDI = 0b10011001;
-    const PRN = 0b01000011;
-
-    const MUL = 0b10101010;
-
-    const HLT = 0b00000001;
-
-    const PUSH = 0b01001101;
-    const POP = 0b01001100;
-
-    const CALL = 0b01001000;
-    const RET = 0b00001001;
+    /* alphabetized instruction codes */
 
     const ADD = 0b10101000;
 
-    const ST = 0b10011010;
+    const CALL = 0b01001000;
+
+    const HLT = 0b00000001;
+
+    const IRET = 0b00001011;
+
     const JMP = 0b01010000;
+
+    const LDI = 0b10011001;
+
+    const MUL = 0b10101010;
+
+    const POP = 0b01001100;
     const PRA = 0b01000010;
+    const PRN = 0b01000011;
+    const PUSH = 0b01001101;
 
-    this.bt[LDI] = (opA, opB) => {
-      this.reg[opA] = opB;
-    };
+    const RET = 0b00001001;
 
-    this.bt[PRN] = (opA, opB) => {
-      console.log(this.reg[opA]);
-    };
+    const ST = 0b10011010;
 
-    this.bt[MUL] = (opA, opB) => {
-      this.alu('MUL', opA, opB);
-    };
+    /* alphabetized instructions */
 
-    this.bt[HLT] = _ => {
-      this.stopClock();
-    };
-
-    this.bt[PUSH] = (opA, opB) => {
-      this.ram.write(--this.SP, this.reg[opA]);
-    };
-
-    this.bt[POP] = (opA, opB) => {
-      this.reg[opA] = this.ram.read(this.SP++);
+    this.bt[ADD] = (opA, opB) => {
+      this.alu('ADD', opA, opB);
     };
 
     this.bt[CALL] = (opA, opB) => {
@@ -77,24 +70,48 @@ class CPU {
       return true;
     };
 
-    this.bt[RET] = (opA, opB) => {
-      this.bt[POP]('PC');
+    this.bt[HLT] = _ => {
+      this.stopClock();
     };
 
-    this.bt[ADD] = (opA, opB) => {
-      this.alu('ADD', opA, opB);
-    };
-
-    this.bt[ST] = (opA, opB) => {
-      this.reg[opA] = this.reg[opB];
+    this.bt[IRET] = _ => {
+      //
     };
 
     this.bt[JMP] = (opA, opB) => {
       this.reg.PC = this.reg[opA];
     };
 
+    this.bt[LDI] = (opA, opB) => {
+      this.reg[opA] = opB;
+    };
+
+    this.bt[MUL] = (opA, opB) => {
+      this.alu('MUL', opA, opB);
+    };
+
+    this.bt[POP] = (opA, opB) => {
+      this.reg[opA] = this.ram.read(this.SP++);
+    };
+
     this.bt[PRA] = opA => {
-      //
+      console.log(String.fromCharCode(this.reg[opA]));
+    };
+
+    this.bt[PRN] = (opA, opB) => {
+      console.log(this.reg[opA]);
+    };
+
+    this.bt[PUSH] = (opA, opB) => {
+      this.ram.write(--this.SP, this.reg[opA]);
+    };
+
+    this.bt[RET] = _ => {
+      this.bt[POP]('PC');
+    };
+
+    this.bt[ST] = (opA, opB) => {
+      this.reg[opA] = this.reg[opB];
     };
   }
 
@@ -117,7 +134,7 @@ class CPU {
 
     this.keyboard = setInterval(_ => {
       console.log('keyboard!');
-      this.reg[6] = 0b00000000;
+      _this.reg.IS = 0b00000001;
     }, 1000);
   }
 
@@ -156,6 +173,16 @@ class CPU {
    * Advances the CPU one cycle
    */
   tick() {
+    /* re-set aliases */
+    this.reg.IR = this.reg[5];
+    this.reg.IS = this.reg[6];
+    this.reg.SP = this.reg[7];
+
+    /* check if interrupts are enabled  */
+    if (this.reg.IR) {
+      console.log('interrupts enabled!');
+    }
+
     // Load the instruction register (IR--can just be a local variable here)
     // from the memory address pointed to by the PC. (I.e. the PC holds the
     // index into memory of the next instruction.)
@@ -192,7 +219,7 @@ class CPU {
           .reverse()
           .concat(new Array(8 - IR.toString(2).length).fill('0'))
           .reverse()
-          .join('')} not found`,
+          .join('')} at ${this.reg.PC} not found`,
       );
       this.bt[0b00000001](); /* HALT */
       return;
