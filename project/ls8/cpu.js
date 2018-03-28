@@ -154,7 +154,6 @@ class CPU {
 
     if (!this.bt[IR]) {
       console.error(`ERROR: instruction ${IR.toString(2)} not found`);
-      console.log('ERROR: ending program');
       this.bt[0b00000001](); /* HALT */
       return;
     }
