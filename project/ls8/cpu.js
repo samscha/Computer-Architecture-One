@@ -10,6 +10,8 @@ class CPU {
    * Initialize the CPU
    */
   constructor(ram) {
+    this.cycle = 0;
+
     this.ram = ram;
 
     this.reg = new Array(8).fill(0); // General-purpose registers R0-R7
@@ -25,8 +27,7 @@ class CPU {
 
     /* add alias for SP (reserved register R7) */
     this.reg.SP = this.reg[7];
-    /* set register R7 (reserved) = F4 address in ram */
-    this.reg.SP = 0xf4;
+    this.reg.SP = 0xf4; /* set register R7 (reserved) = F4 address in ram */
 
     this.bt = [];
 
@@ -80,6 +81,8 @@ class CPU {
 
     this.bt[JMP] = (opA, opB) => {
       this.reg.PC = this.reg[opA];
+
+      return true;
     };
 
     this.bt[LDI] = (opA, opB) => {
@@ -111,7 +114,7 @@ class CPU {
     };
 
     this.bt[ST] = (opA, opB) => {
-      this.reg[opA] = this.reg[opB];
+      this.ram.write(this.reg[opA], this.reg[opB]);
     };
   }
 
@@ -173,14 +176,23 @@ class CPU {
    * Advances the CPU one cycle
    */
   tick() {
+    /* if more than 10 "seconds"  */
+    if (++this.cycle > 20) {
+      this.bt[0b00000001](); /* HALT */
+      return;
+    }
+
     /* re-set aliases */
-    this.reg.IR = this.reg[5];
+    this.reg.IM = this.reg[5];
     this.reg.IS = this.reg[6];
     this.reg.SP = this.reg[7];
 
     /* check if interrupts are enabled  */
-    if (this.reg.IR) {
-      console.log('interrupts enabled!');
+    if (this.reg.IM) {
+      console.log('reg IM', this.reg.IM);
+      console.log('reg IS', this.reg.IS);
+      const interrupts = this.reg.IM & this.reg.IS;
+      console.log('inerrupts', interrupts);
     }
 
     // Load the instruction register (IR--can just be a local variable here)
