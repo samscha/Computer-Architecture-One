@@ -17,8 +17,11 @@ class CPU {
     // Special-purpose registers
     this.reg.PC = 0; // Program Counter
 
-    this.reg[7] = 255 - 12;
     /* register R7 (reserved) = F4 address in ram */
+    this.reg[7] = 0xf4;
+
+    /* add alias SP */
+    this.reg.SP = this.reg[7];
 
     this.bt = [];
 
@@ -54,11 +57,11 @@ class CPU {
     };
 
     this.bt[PUSH] = (opA, opB) => {
-      this.ram.write(--this.reg[7], this.reg[opA]);
+      this.ram.write(--this.SP, this.reg[opA]);
     };
 
     this.bt[POP] = (opA, opB) => {
-      this.reg[opA] = this.ram.read(this.reg[7]++);
+      this.reg[opA] = this.ram.read(this.SP++);
     };
 
     this.bt[CALL] = (opA, opB) => {
