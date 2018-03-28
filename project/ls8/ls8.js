@@ -1,4 +1,5 @@
 const readPrograms = require('./worker/readPrograms');
+const checkArgs = require('./worker/checkArgs');
 
 const RAM = require('./ram');
 const CPU = require('./cpu');
@@ -34,6 +35,7 @@ const onHalt = _ => {
  * Main
  */
 
+checkArgs(process.argv);
 const programs = readPrograms(process.argv);
 const programNames = process.argv.slice(2);
 
