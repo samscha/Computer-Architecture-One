@@ -41,6 +41,8 @@ class CPU {
     const ADD = 0b10101000;
 
     const ST = 0b10011010;
+    const JMP = 0b01010000;
+    const PRA = 0b01000010;
 
     this.bt[LDI] = (opA, opB) => {
       this.reg[opA] = opB;
@@ -54,7 +56,7 @@ class CPU {
       this.alu('MUL', opA, opB);
     };
 
-    this.bt[HLT] = (opA, opB) => {
+    this.bt[HLT] = _ => {
       this.stopClock();
     };
 
@@ -86,6 +88,14 @@ class CPU {
     this.bt[ST] = (opA, opB) => {
       this.reg[opA] = this.reg[opB];
     };
+
+    this.bt[JMP] = (opA, opB) => {
+      this.reg.PC = this.reg[opA];
+    };
+
+    this.bt[PRA] = opA => {
+      //
+    };
   }
 
   /**
@@ -106,8 +116,9 @@ class CPU {
     }, 1); // 1 ms delay == 1 KHz clock == 0.000001 GHz
 
     this.keyboard = setInterval(_ => {
-      //
-    });
+      console.log('keyboard!');
+      this.reg[6] = 0b00000000;
+    }, 1000);
   }
 
   /**
@@ -152,7 +163,18 @@ class CPU {
     const IR = this.ram.read(this.reg.PC);
 
     // Debugging output
-    // console.log(`${this.reg.PC}: ${IR.toString(2)}`);
+    let debug;
+    debug = true; /* un/comment this line only */
+    debug || false
+      ? console.log(
+          `${this.reg.PC}:${this.reg.PC < 10 ? ' ' : ''} ${IR.toString(2)
+            .split('')
+            .reverse()
+            .concat(new Array(8 - IR.toString(2).length).fill('0'))
+            .reverse()
+            .join('')}`,
+        )
+      : null;
 
     // Get the two bytes in memory _after_ the PC in case the instruction
     // needs them.
@@ -167,6 +189,7 @@ class CPU {
       console.error(
         `ERROR: instruction ${IR.toString(2)
           .split('')
+          .reverse()
           .concat(new Array(8 - IR.toString(2).length).fill('0'))
           .reverse()
           .join('')} not found`,
