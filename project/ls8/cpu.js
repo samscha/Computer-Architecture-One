@@ -75,7 +75,7 @@ class CPU {
     };
 
     this.bt[ADD] = (opA, opB) => {
-      this.reg[opA] = this.reg[opA] + this.reg[opB];
+      this.alu('ADD', opA, opB);
     };
   }
 
@@ -120,6 +120,9 @@ class CPU {
     switch (op) {
       case 'MUL':
         this.reg[regA] *= this.reg[regB];
+        break;
+      case 'ADD':
+        this.reg[regA] += this.reg[regB];
         break;
     }
   }
