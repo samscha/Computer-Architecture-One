@@ -152,6 +152,12 @@ class CPU {
     // Execute the instruction. Perform the actions for the instruction as
     // outlined in the LS-8 spec.
 
+    if (!this.bt[IR]) {
+      console.error(`ERROR: instruction << ${IR.toString(2)} >> not found`);
+      this.bt[0b00000001](); /* HALT */
+      return;
+    }
+
     const IRCall = this.bt[IR](operandA, operandB);
 
     // Increment the PC register to go to the next instruction. Instructions
