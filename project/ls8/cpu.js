@@ -16,11 +16,13 @@ class CPU {
 
     this.reg = new Array(8).fill(0); // General-purpose registers R0-R7
 
-    // Special-purpose registers
+    /* Internal Registers */
     this.IR = 0b0000000; /* Instruction Register */
+    // Special-purpose registers
     this.reg.PC = 0; // Program Counter
     this.reg.FL = 0b0000000; /* Flag status  */
 
+    /* Reserved Registers */
     /* set alias for IM register (reserved register R5) */
     this.reg[5] = 0b0000000;
     this.IM = 5; /* alias for IM register */
@@ -33,9 +35,12 @@ class CPU {
     this.reg[7] = 0xf4; /* set register R7 (reserved) = F4 address in ram */
     this.SP = 7; /* alias for SP register */
 
+    /* Tables */
     this.bt = [];
     this.vt = [];
+    this.it = [];
 
+    /* Branch Table */
     /* alphabetized instruction codes */
 
     const ADD = 0b10101000;
@@ -91,6 +96,7 @@ class CPU {
 
       /* enable  interrupts */
       this.reg[5] = 0b00000001; /* equivalent to this.reg.IM = 1 */
+
       return true;
     };
 
@@ -132,8 +138,8 @@ class CPU {
       this.ram.write(this.reg[opA], this.reg[opB]);
     };
 
+    /* Vector Table */
     /* vt or interrupt vector table */
-
     this.vt[0] = 0xf8;
     this.vt[1] = 0xf9;
     this.vt[2] = 0xfa;
@@ -142,6 +148,53 @@ class CPU {
     this.vt[5] = 0xfd;
     this.vt[6] = 0xfe;
     this.vt[7] = 0xff;
+
+    /* Interrupt Table */
+    const INTERRUPT = 'INTERRUPT';
+
+    this.it[INTERRUPT] = _ => {
+      const interrupts = this.reg[this.IM] & this.reg[this.IS];
+
+      if (interrupts) {
+        let interruptHappened = false;
+        let interruptBit = 0;
+
+        for (let i = 0; i < 8; i++) {
+          if (((interrupts >> i) & 1) === 1) {
+            interruptBit = i;
+            interruptHappened = true;
+            break;
+          }
+        }
+
+        if (interruptHappened) {
+          /* disable further interrupts */
+          this.reg[this.IM] = 0b00000000; /* equivalent to this.reg.IM = 0 */
+
+          /* clear the bit in the IS register */
+          this.reg[this.IS] = 0b00000000; /* equivalent to this.reg.IS = 0 */
+
+          /* push PC register to stack */
+          this.bt[PUSH]('PC'); /* PUSH */
+
+          /* push FL register to stack */
+          this.bt[PUSH]('FL'); /* PUSH */
+
+          /* push R0 -> R1 -> ... -> R5 -> R6 to stack */
+          for (let i = 0; i <= 6; i++) {
+            this.bt[PUSH](i); /* PUSH */
+          }
+
+          /* look up appropiate handler from interrupt vector table */
+          const v = this.vt[interruptBit];
+
+          /* set PC to handler address */
+          this.reg.PC = this.ram.read(v);
+          return true;
+        }
+      }
+      return false;
+    };
   }
 
   /**
@@ -208,47 +261,8 @@ class CPU {
     }
 
     /* check if bit 0 of the IS is set */
-    if (this.reg[this.IS]) {
-      const interrupts = this.reg[this.IM] & this.reg[this.IS];
-
-      if (interrupts) {
-        let interruptHappened = false;
-        let interruptBit = 0;
-
-        for (let i = 0; i < 8; i++) {
-          if (((interrupts >> i) & 1) === 1) {
-            interruptBit = i;
-            interruptHappened = true;
-            break;
-          }
-        }
-
-        if (interruptHappened) {
-          /* disable further interrupts */
-          this.reg[this.IM] = 0b00000000; /* equivalent to this.reg.IM = 0 */
-
-          /* clear the bit in the IS register */
-          this.reg[this.IS] = 0b00000000; /* equivalent to this.reg.IS = 0 */
-
-          /* push PC register to stack */
-          this.bt[0b01001101]('PC'); /* PUSH */
-
-          /* push FL register to stack */
-          this.bt[0b01001101]('FL'); /* PUSH */
-
-          /* push R0 -> R1 -> ... -> R5 -> R6 to stack */
-          for (let i = 0; i <= 6; i++) {
-            this.bt[0b01001101](i); /* PUSH */
-          }
-
-          /* look up appropiate handler from interrupt vector table */
-          const v = this.vt[interruptBit];
-
-          /* set PC to handler address */
-          this.reg.PC = this.ram.read(v);
-          return;
-        }
-      }
+    if (((this.reg[this.IS] >> 0) & 1) === 1) {
+      if (this.it['INTERRUPT']()) return;
     }
 
     // Load the instruction register (IR--can just be a local variable here)
@@ -294,19 +308,12 @@ class CPU {
     // Execute the instruction. Perform the actions for the instruction as
     // outlined in the LS-8 spec.
 
-    const endTick = this.bt[this.IR](operandA, operandB);
+    if (this.bt[this.IR](operandA, operandB)) return;
 
     // Increment the PC register to go to the next instruction. Instructions
     // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
     // instruction byte tells you how many bytes follow the instruction byte
     // for any particular instruction.
-
-    if (endTick) return;
-
-    if (this.reg.IM) {
-      // console.log('this.reg.IM exists and this.reg.PC is:', this.reg.PC);
-      // console.log('this.cycle', this.cycle);
-    }
 
     this.reg.PC += 1 + (this.IR >>> 6);
   }
