@@ -18,6 +18,7 @@ class CPU {
 
     // Special-purpose registers
     this.reg.PC = 0; // Program Counter
+    this.reg.FL = 0b0000000; /* Flag status  */
 
     /* set alias for IM register (reserved register R5) */
     this.reg.IM = this.reg[5];
@@ -76,7 +77,17 @@ class CPU {
     };
 
     this.bt[IRET] = _ => {
-      //
+      /* POP R6 -> R5 -> ... -> R1 -> R0 */
+      for (let i = 6; i <= 0; i--) {
+        this.bt[POP](i);
+      }
+
+      this.bt[POP]('FL');
+      this.bt[POP]('PC');
+
+      /* enable  interrupts */
+      this.reg[5] = 0b00000001; /* equivalent to this.reg.IM = 1 */
+      return true;
     };
 
     this.bt[JMP] = (opA, opB) => {
@@ -135,9 +146,8 @@ class CPU {
       _this.tick();
     }, 1); // 1 ms delay == 1 KHz clock == 0.000001 GHz
 
-    this.keyboard = setInterval(_ => {
-      console.log('keyboard!');
-      _this.reg.IS = 0b00000001;
+    this.timerInterrupt = setInterval(_ => {
+      _this.reg[6] = 0b00000001; /* R6 is the IS register */
     }, 1000);
   }
 
@@ -176,8 +186,8 @@ class CPU {
    * Advances the CPU one cycle
    */
   tick() {
-    /* if more than 10 "seconds"  */
-    if (++this.cycle > 20) {
+    /* if more than 10 "seconds" */
+    if (++this.cycle > 10000) {
       this.bt[0b00000001](); /* HALT */
       return;
     }
@@ -187,12 +197,48 @@ class CPU {
     this.reg.IS = this.reg[6];
     this.reg.SP = this.reg[7];
 
-    /* check if interrupts are enabled  */
+    /* check if interrupts are enabled */
     if (this.reg.IM) {
-      console.log('reg IM', this.reg.IM);
-      console.log('reg IS', this.reg.IS);
       const interrupts = this.reg.IM & this.reg.IS;
-      console.log('inerrupts', interrupts);
+
+      if (interrupts) {
+        let interruptHappened = false;
+        let interruptBit = 0;
+
+        for (let i = 0; i < 8; i++) {
+          if (((interrupts >> i) & 1) === 1) {
+            interruptBit = i;
+            interruptHappened = true;
+            break;
+          }
+        }
+
+        if (interruptHappened) {
+          /* disable further interrupts */
+          this.reg[5] = 0b00000000; /* equivalent to this.reg.IM = 0 */
+
+          /* clear the bit in the IS register */
+          this.reg[6] = 0b00000000; /* equivalent to this.reg.IS = 0 */
+
+          /* push PC register to stack */
+          this.bt[0b01001101]('PC'); /* PUSH */
+
+          /* push FL register to stack */
+          this.bt[0b01001101]('FL'); /* PUSH */
+
+          /* push R0 -> R1 -> ... -> R5 -> R6 to stack */
+          for (let i = 0; i <= 6; i++) {
+            this.bt[0b01001101](i); /* PUSH */
+          }
+
+          /* look up appropiate handler from interrupt vector table */
+          const iVector = 0xf8 + interruptBit;
+
+          /* set PC to handler address */
+          this.reg.PC = this.ram.read(iVector);
+          return;
+        }
+      }
     }
 
     // Load the instruction register (IR--can just be a local variable here)
@@ -201,9 +247,23 @@ class CPU {
 
     const IR = this.ram.read(this.reg.PC);
 
+    /* check if IR is in bt */
+    if (!this.bt[IR]) {
+      console.error(
+        `ERROR: instruction ${IR.toString(2)
+          .split('')
+          .reverse()
+          .concat(new Array(8 - IR.toString(2).length).fill('0'))
+          .reverse()
+          .join('')} at ${this.reg.PC} not found`,
+      );
+      this.bt[0b00000001](); /* HALT */
+      return;
+    }
+
     // Debugging output
     let debug;
-    debug = true; /* un/comment this line only */
+    // debug = true; /* un/comment this line only */
     debug || false
       ? console.log(
           `${this.reg.PC}:${this.reg.PC < 10 ? ' ' : ''} ${IR.toString(2)
@@ -224,27 +284,19 @@ class CPU {
     // Execute the instruction. Perform the actions for the instruction as
     // outlined in the LS-8 spec.
 
-    if (!this.bt[IR]) {
-      console.error(
-        `ERROR: instruction ${IR.toString(2)
-          .split('')
-          .reverse()
-          .concat(new Array(8 - IR.toString(2).length).fill('0'))
-          .reverse()
-          .join('')} at ${this.reg.PC} not found`,
-      );
-      this.bt[0b00000001](); /* HALT */
-      return;
-    }
-
-    const IRCall = this.bt[IR](operandA, operandB);
+    const endTick = this.bt[IR](operandA, operandB);
 
     // Increment the PC register to go to the next instruction. Instructions
     // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
     // instruction byte tells you how many bytes follow the instruction byte
     // for any particular instruction.
 
-    if (IRCall) return;
+    if (endTick) return;
+
+    if (this.reg.IM) {
+      // console.log('this.reg.IM exists and this.reg.PC is:', this.reg.PC);
+      // console.log('this.cycle', this.cycle);
+    }
 
     this.reg.PC += 1 + (IR >>> 6);
   }
