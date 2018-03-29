@@ -17,6 +17,7 @@ class CPU {
     this.reg = new Array(8).fill(0); // General-purpose registers R0-R7
 
     // Special-purpose registers
+    this.IR = 0b0000000; /* Instruction Register */
     this.reg.PC = 0; // Program Counter
     this.reg.FL = 0b0000000; /* Flag status  */
 
@@ -254,15 +255,15 @@ class CPU {
     // from the memory address pointed to by the PC. (I.e. the PC holds the
     // index into memory of the next instruction.)
 
-    const IR = this.ram.read(this.reg.PC);
+    this.IR = this.ram.read(this.reg.PC);
 
     /* check if IR is in bt */
-    if (!this.bt[IR]) {
+    if (!this.bt[this.IR]) {
       console.error(
-        `ERROR: instruction ${IR.toString(2)
+        `ERROR: instruction ${this.IR.toString(2)
           .split('')
           .reverse()
-          .concat(new Array(8 - IR.toString(2).length).fill('0'))
+          .concat(new Array(8 - this.IR.toString(2).length).fill('0'))
           .reverse()
           .join('')} at ${this.reg.PC} not found`,
       );
@@ -275,7 +276,7 @@ class CPU {
     // debug = true; /* un/comment this line only */
     debug || false
       ? console.log(
-          `${this.reg.PC}:${this.reg.PC < 10 ? ' ' : ''} ${IR.toString(2)
+          `${this.reg.PC}:${this.reg.PC < 10 ? ' ' : ''} ${this.IR.toString(2)
             .split('')
             .reverse()
             .concat(new Array(8 - IR.toString(2).length).fill('0'))
@@ -293,7 +294,7 @@ class CPU {
     // Execute the instruction. Perform the actions for the instruction as
     // outlined in the LS-8 spec.
 
-    const endTick = this.bt[IR](operandA, operandB);
+    const endTick = this.bt[this.IR](operandA, operandB);
 
     // Increment the PC register to go to the next instruction. Instructions
     // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
@@ -307,7 +308,7 @@ class CPU {
       // console.log('this.cycle', this.cycle);
     }
 
-    this.reg.PC += 1 + (IR >>> 6);
+    this.reg.PC += 1 + (this.IR >>> 6);
   }
 }
 
