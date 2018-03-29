@@ -16,19 +16,19 @@ function loadMemory(cpu, program) {
 
 const onHalt = _ => {
   console.log('');
-  if (cycle > process.argv.length - 2 - 1) {
+  if (programIndex > process.argv.length - 2 - 1) {
     console.log('<< shutting down >>');
     process.exit(0);
   }
 
-  console.log(`<< ${process.argv.slice(2)[cycle]} >>`);
+  console.log(`<< ${process.argv.slice(2)[programIndex]} >>`);
 
   const ram = new RAM(256); /* new cpu */
   const cpu = new CPU(ram); /* new ram */
 
   cpu.onHalt = onHalt; /* register onHalt with cpu */
 
-  const program = readProgram(process.argv.slice(2)[cycle++]);
+  const program = readProgram(process.argv.slice(2)[programIndex++]);
 
   if (!program) {
     onHalt();
@@ -43,7 +43,7 @@ const onHalt = _ => {
  * Main
  */
 
-let cycle = 0;
+let programIndex = 0;
 
 if (process.argv.length < 3) {
   console.error('Please provide programs: node ls8.js <<FILE/PATH HERE>>');
