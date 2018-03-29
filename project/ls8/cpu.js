@@ -27,10 +27,11 @@ class CPU {
     this.reg.IS = this.reg[6];
 
     /* add alias for SP (reserved register R7) */
-    this.reg.SP = this.reg[7];
-    this.reg.SP = 0xf4; /* set register R7 (reserved) = F4 address in ram */
+    this.reg[7] = 0xf4; /* set register R7 (reserved) = F4 address in ram */
+    this.SP = 7; /* alias for SP register */
 
     this.bt = [];
+    this.vt = [];
 
     /* alphabetized instruction codes */
 
@@ -105,7 +106,7 @@ class CPU {
     };
 
     this.bt[POP] = (opA, opB) => {
-      this.reg[opA] = this.ram.read(this.SP++);
+      this.reg[opA] = this.ram.read(this.reg[this.SP]++);
     };
 
     this.bt[PRA] = opA => {
@@ -117,7 +118,7 @@ class CPU {
     };
 
     this.bt[PUSH] = (opA, opB) => {
-      this.ram.write(--this.SP, this.reg[opA]);
+      this.ram.write(--this.reg[this.SP], this.reg[opA]);
     };
 
     this.bt[RET] = _ => {
@@ -127,6 +128,17 @@ class CPU {
     this.bt[ST] = (opA, opB) => {
       this.ram.write(this.reg[opA], this.reg[opB]);
     };
+
+    /* vt or interrupt vector table */
+
+    this.vt[0] = 0xf8;
+    this.vt[1] = 0xf9;
+    this.vt[2] = 0xfa;
+    this.vt[3] = 0xfb;
+    this.vt[4] = 0xfc;
+    this.vt[5] = 0xfd;
+    this.vt[6] = 0xfe;
+    this.vt[7] = 0xff;
   }
 
   /**
@@ -186,7 +198,7 @@ class CPU {
    * Advances the CPU one cycle
    */
   tick() {
-    /* if more than 10 "seconds" */
+    /* stop cpu clock after 10 seconds */
     if (++this.cycle > 10000) {
       this.bt[0b00000001](); /* HALT */
       return;
@@ -197,8 +209,8 @@ class CPU {
     this.reg.IS = this.reg[6];
     this.reg.SP = this.reg[7];
 
-    /* check if interrupts are enabled */
-    if (this.reg.IM) {
+    /* check if bit 0 of the IS is set */
+    if (this.reg.IS) {
       const interrupts = this.reg.IM & this.reg.IS;
 
       if (interrupts) {
@@ -232,10 +244,10 @@ class CPU {
           }
 
           /* look up appropiate handler from interrupt vector table */
-          const iVector = 0xf8 + interruptBit;
+          const v = this.vt[interruptBit];
 
           /* set PC to handler address */
-          this.reg.PC = this.ram.read(iVector);
+          this.reg.PC = this.ram.read(v);
           return;
         }
       }
