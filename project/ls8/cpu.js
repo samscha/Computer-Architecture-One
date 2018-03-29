@@ -139,15 +139,24 @@ class CPU {
     };
 
     /* Vector Table */
+    const IO = 0;
+    const I1 = 1;
+    const I2 = 2;
+    const I3 = 3;
+    const I4 = 4;
+    const I5 = 5;
+    const I6 = 6;
+    const I7 = 7;
+
     /* vt or interrupt vector table */
-    this.vt[0] = 0xf8;
-    this.vt[1] = 0xf9;
-    this.vt[2] = 0xfa;
-    this.vt[3] = 0xfb;
-    this.vt[4] = 0xfc;
-    this.vt[5] = 0xfd;
-    this.vt[6] = 0xfe;
-    this.vt[7] = 0xff;
+    this.vt[IO] = 0xf8;
+    this.vt[I1] = 0xf9;
+    this.vt[I2] = 0xfa;
+    this.vt[I3] = 0xfb;
+    this.vt[I4] = 0xfc;
+    this.vt[I5] = 0xfd;
+    this.vt[I6] = 0xfe;
+    this.vt[I7] = 0xff;
 
     /* Interrupt Table */
     const INTERRUPT = 'INTERRUPT';
@@ -215,7 +224,7 @@ class CPU {
     }, 1); // 1 ms delay == 1 KHz clock == 0.000001 GHz
 
     this.timerInterrupt = setInterval(_ => {
-      _this.reg[6] = 0b00000001; /* R6 is the IS register */
+      _this.reg[this.IS] = 0b00000001; /* R6 is the IS register */
     }, 1000);
   }
 
@@ -254,7 +263,7 @@ class CPU {
    * Advances the CPU one cycle
    */
   tick() {
-    /* stop cpu clock after 10 seconds */
+    /* stop cpu clock after 10 'seconds' */
     if (++this.cycle > 10000) {
       this.bt[0b00000001](); /* HALT */
       return;
