@@ -261,9 +261,7 @@ class CPU {
     }
 
     /* check if bit 0 of the IS is set */
-    if (((this.reg[this.IS] >> 0) & 1) === 1) {
-      if (this.it['INTERRUPT']()) return;
-    }
+    if (((this.reg[this.IS] >> 0) & 1) === 1 && this.it['INTERRUPT']()) return;
 
     // Load the instruction register (IR--can just be a local variable here)
     // from the memory address pointed to by the PC. (I.e. the PC holds the
