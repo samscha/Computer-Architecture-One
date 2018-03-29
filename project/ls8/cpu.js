@@ -21,10 +21,12 @@ class CPU {
     this.reg.FL = 0b0000000; /* Flag status  */
 
     /* set alias for IM register (reserved register R5) */
-    this.reg.IM = this.reg[5];
+    this.reg[5] = 0b0000000;
+    this.IM = 5; /* alias for IM register */
 
     /* add alias for IS register (reserved register R6) */
-    this.reg.IS = this.reg[6];
+    this.reg[6] = 0b0000000;
+    this.IS = 6; /* alias for IM register */
 
     /* add alias for SP (reserved register R7) */
     this.reg[7] = 0xf4; /* set register R7 (reserved) = F4 address in ram */
@@ -204,14 +206,9 @@ class CPU {
       return;
     }
 
-    /* re-set aliases */
-    this.reg.IM = this.reg[5];
-    this.reg.IS = this.reg[6];
-    this.reg.SP = this.reg[7];
-
     /* check if bit 0 of the IS is set */
-    if (this.reg.IS) {
-      const interrupts = this.reg.IM & this.reg.IS;
+    if (this.reg[this.IS]) {
+      const interrupts = this.reg[this.IM] & this.reg[this.IS];
 
       if (interrupts) {
         let interruptHappened = false;
@@ -227,10 +224,10 @@ class CPU {
 
         if (interruptHappened) {
           /* disable further interrupts */
-          this.reg[5] = 0b00000000; /* equivalent to this.reg.IM = 0 */
+          this.reg[this.IM] = 0b00000000; /* equivalent to this.reg.IM = 0 */
 
           /* clear the bit in the IS register */
-          this.reg[6] = 0b00000000; /* equivalent to this.reg.IS = 0 */
+          this.reg[this.IS] = 0b00000000; /* equivalent to this.reg.IS = 0 */
 
           /* push PC register to stack */
           this.bt[0b01001101]('PC'); /* PUSH */
