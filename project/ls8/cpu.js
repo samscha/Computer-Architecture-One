@@ -46,12 +46,15 @@ class CPU {
     const ADD = 0b10101000;
 
     const CALL = 0b01001000;
+    const CMP = 0b10100000;
 
     const HLT = 0b00000001;
 
     const IRET = 0b00001011;
 
+    const JEQ = 0b01010001;
     const JMP = 0b01010000;
+    const JNE = 0b01010010;
 
     const LDI = 0b10011001;
 
@@ -69,16 +72,20 @@ class CPU {
     /* alphabetized instructions */
 
     this.bt[ADD] = (opA, opB) => {
-      this.alu('ADD', opA, opB);
+      this.reg[opA] = this.alu('ADD', this.reg[opA], this.reg[opB]);
     };
 
-    this.bt[CALL] = (opA, opB) => {
+    this.bt[CALL] = opA => {
       this.reg.PC += CALL >>> 6;
       this.bt[PUSH]('PC');
 
       this.reg.PC = this.reg[opA];
 
       return true;
+    };
+
+    this.bt[CMP] = (opA, opB) => {
+      this.reg.FL = this.alu('CMP', this.reg[opA], this.reg[opB]);
     };
 
     this.bt[HLT] = _ => {
@@ -100,10 +107,18 @@ class CPU {
       return true;
     };
 
-    this.bt[JMP] = (opA, opB) => {
+    this.bt[JEQ] = opA => {
+      if (((this.reg.FL >> 0) & 1) === 1) return this.bt[JMP](opA);
+    };
+
+    this.bt[JMP] = opA => {
       this.reg.PC = this.reg[opA];
 
       return true;
+    };
+
+    this.bt[JNE] = opA => {
+      if (((this.reg.FL >> 0) & 1) === 0) return this.bt[JMP](opA);
     };
 
     this.bt[LDI] = (opA, opB) => {
@@ -111,10 +126,10 @@ class CPU {
     };
 
     this.bt[MUL] = (opA, opB) => {
-      this.alu('MUL', opA, opB);
+      this.reg[opA] = this.alu('MUL', this.reg[opA], this.reg[opB]);
     };
 
-    this.bt[POP] = (opA, opB) => {
+    this.bt[POP] = opA => {
       this.reg[opA] = this.ram.read(this.reg[this.SP]++);
     };
 
@@ -122,11 +137,11 @@ class CPU {
       console.log(String.fromCharCode(this.reg[opA]));
     };
 
-    this.bt[PRN] = (opA, opB) => {
+    this.bt[PRN] = opA => {
       console.log(this.reg[opA]);
     };
 
-    this.bt[PUSH] = (opA, opB) => {
+    this.bt[PUSH] = opA => {
       this.ram.write(--this.reg[this.SP], this.reg[opA]);
     };
 
@@ -159,7 +174,13 @@ class CPU {
     this.vt[I7] = 0xff;
 
     /* Interrupt Table */
+    const KEYBOARDINTERRUPT = 'KEYBOARDINTERRUPT';
     const INTERRUPT = 'INTERRUPT';
+    const KEYBOARD = 'KEYBOARD';
+
+    this.it[KEYBOARDINTERRUPT] = _ => {
+      // TODO *****************************************************************
+    };
 
     this.it[INTERRUPT] = _ => {
       const interrupts = this.reg[this.IM] & this.reg[this.IS];
@@ -204,6 +225,10 @@ class CPU {
       }
       return false;
     };
+
+    this.it[KEYBOARD] = _ => {
+      // TODO *****************************************************************
+    };
   }
 
   /**
@@ -233,7 +258,7 @@ class CPU {
    */
   stopClock() {
     clearInterval(this.clock);
-    clearInterval(this.keyboard);
+    clearInterval(this.timerInterrupt);
 
     this.onHalt();
   }
@@ -250,12 +275,14 @@ class CPU {
    */
   alu(op, regA, regB) {
     switch (op) {
-      case 'MUL':
-        this.reg[regA] *= this.reg[regB];
-        break;
       case 'ADD':
-        this.reg[regA] += this.reg[regB];
-        break;
+        return (regA += regB);
+      case 'MUL':
+        return (regA *= regB);
+      case 'CMP':
+        if (regA - regB > 0) return 0b00000010;
+        if (regA - regB < 0) return 0b00000100;
+        return 0b00000001;
     }
   }
 
@@ -313,7 +340,7 @@ class CPU {
           `${this.reg.PC}:${this.reg.PC < 10 ? ' ' : ''} ${this.IR.toString(2)
             .split('')
             .reverse()
-            .concat(new Array(8 - IR.toString(2).length).fill('0'))
+            .concat(new Array(8 - this.IR.toString(2).length).fill('0'))
             .reverse()
             .join('')}`,
         )
